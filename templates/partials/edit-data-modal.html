@@ -1,0 +1,79 @@
+{% extends "layouts/base.html" %}
+{% block jsondash_body %}
+<div class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="modal-title">Chart Params</h4>
+        </div>
+        <div class="panel-body">
+            <div class="col-md-12">
+            	<form class="form-inline" id="module-form" role="form" action="uploader" method="post">
+                    <fieldset>
+                        <legend class="lead">Required fields</legend>
+                        <label>
+                            File Path <small class="text-danger">*</small>
+                            <input class="form-control" type="file" name="file" value="" placeholder="File Path" required>
+                        </label>
+			<input type = "submit"/>
+			<div id="upload-progress"><div class="progress-bar"></div></div>
+                    </fieldset>
+                  </form>
+	   </div>
+            <br>
+            <div class="row">
+                <div class="col-md-12">
+                </div>
+            </div>
+        </div>
+    </div><!-- /.modal-content -->
+<div id="chart"></div>
+{% endblock %}
+{% block jsondash_api_scripts %}
+<script>
+var filename;
+$("#module-form").submit(function(event){
+    event.preventDefault(); //prevent default action 
+    var post_url = $(this).attr("action"); //get form action url
+    var request_method = $(this).attr("method"); //get form GET/POST method
+    var form_data = new FormData(this); //Encode form elements for submission
+    
+    $.ajax({
+        url : post_url,
+        type: request_method,
+        data : form_data,
+        contentType: false,
+        processData:false,
+        xhr: function(){
+        //upload Progress
+        var xhr = $.ajaxSettings.xhr();
+        if (xhr.upload) {
+            xhr.upload.addEventListener('progress', function(event) {
+                var percent = 0;
+                var position = event.loaded || event.position;
+                var total = event.total;
+                if (event.lengthComputable) {
+                    percent = Math.ceil(position / total * 100);
+                }
+                //update progressbar
+                $("#upload-progress .progress-bar").css("width", + percent +"%");
+            }, true);
+        }
+        return xhr;
+    }
+    }).done(function(response){ 
+	var chart = c3.generate({
+	    data: {
+	        url: response,
+	        type: 'bar'
+	    },
+	    bar: {
+	        width: {
+	            ratio: 0.5
+	        }
+	    },
+	   axis: {rotated : true}
+	});
+        //$("#chart").html(response);
+    });
+});
+</script>
+{% endblock %}

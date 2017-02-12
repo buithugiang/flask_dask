@@ -1,0 +1,135 @@
+{% extends "layouts/charts_base.html" %}
+
+{% block chart_body %}
+{%- macro item(view) %}
+<li class="list-group-item chart-list-item clearfix">
+    <span class="fa fa-bar-chart"></span>
+    <a href="{#{{ url_for('jsondash.view', c_id=view.id) }}#}">
+        <strong>{{ view.name }}</strong> - Created {{ view.date }}
+        {% if view.created_by %} by {{ view.created_by }}{% endif %}
+        ({{ view.modules|length }} modules)
+    </a>
+    <div class="pull-right">
+        {#<form class="form-inline" action="{{ url_for('jsondash.clone', c_id=view.id) }}" method="POST">#}
+            <button class="btn btn-success btn-xs">
+                <span class="fa fa-clone"></span> Clone
+            </button>
+        {#</form>#}
+        {#<form class="form-inline delete-dashboard" action="{{ url_for('jsondash.delete', c_id=view.id) }}" method="POST">#}
+            <button class="btn btn-danger btn-xs">
+                <span class="fa fa-times"></span> Delete
+            </button>
+        {#</form>#}
+    </div>
+</li>
+{% endmacro -%}
+
+<div class="row">
+    <div class="col-md-12">
+        {% if paginator %}
+            {% set curr_max_range = paginator.skip + paginator.per_page %}
+            {% if curr_max_range > paginator.count %}
+                {% set curr_max_range = paginator.count %}
+            {% endif %}
+        {% endif %}
+        {% if views %}
+            <div class="row">
+                <div class="col-md-6 text-right">
+                    <h1 class="lead">Showing <strong>{{ "{:,}".format(views|length) }}</strong> {{ 'dashboards' if views|length > 1 else 'dashboard' }} with <strong>{{ "{:,}".format(total_modules) }}</strong> charts.
+                        <p>
+                            <small>
+                                {% if filter_dashboards and username %}
+                                    Only showing <strong>your</strong> dashboards ({{ username }})
+                                    {% if global_dashboards %}
+                                        and all <strong>global</strong> dashboards
+                                    {% endif %}
+                                {% else %}
+                                    Not filtering any dashboards.
+                                {% endif %}
+                            </small>
+                        </p>
+                    </h1>
+                </div>
+                <div class="col-md-6">
+                    <h1>
+                        <a href="#new-view-form" class="btn btn-md btn-success" id="add" data-toggle="collapse">
+                            <span class="fa fa-plus"></span> Create new dashboard
+                        </a>
+                    </h1>
+                </div>
+            </div>
+        {% endif %}
+        <div id="new-view-form" class="{{ 'collapse' if views else ''}} row">
+            <div class="col-md-12">
+                {% if not views %}
+                <div class="alert alert-warning text-center">
+                    <p>No dashboards exist. Create one below to get started.</p>
+                </div>
+                {% endif %}
+                <h3>Create dashboard</h3>
+                {#{% include "partials/form-view.html" %}#}
+                {#{% include "partials/edit-data-modal.html" %}#}
+            </div>
+        </div>
+
+        <ul class="list-group chart-list">
+            {% for view in views %}
+                {% set is_user_view = username == view.created_by %}
+                {% set in_range = True %}
+                {% if paginator %}
+                    {% set in_range = loop.index > paginator.skip and loop.index < curr_max_range + 1 %}
+                {% endif %}
+                {% set show_global_dash = global_dashboards and view.created_by == global_dashuser %}
+                {% if in_range %}
+                    {% if filter_dashboards %}
+                        {% if show_global_dash or is_user_view %}
+                            {{ item(view) }}
+                        {% endif %}
+                    {% else %}
+                        {{ item(view) }}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </ul>
+
+        {% if paginator %}
+            {% if paginator.count > paginator.limit %}
+                <div class="text-center">
+                    <ul class="pagination pagination-small">
+                        {% if paginator.curr_page > 0 %}
+                            <li>
+                                <a href="{#{{ url_for('jsondash.dashboard') }}?page={{ paginator.curr_page }}&amp;per_page={{ paginator.limit }}#}">
+                                    <span class="fa fa-angle-left"></span>
+                                    Previous
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% for page in paginator.num_pages %}
+                            <li class="{{ 'active' if page == paginator.curr_page + 1 else '' }}">
+                                <a href="{#{{ url_for('jsondash.dashboard') }}?page={{ page }}&amp;per_page={{ paginator.limit }}#}">{{ page }}</a>
+                            </li>
+                        {% endfor %}
+                        {% if paginator.curr_page < paginator.num_pages|length - 1 %}
+                            <li>
+                                <a href="{#{{ url_for('jsondash.dashboard') }}?page={{ paginator.curr_page + 2 }}&amp;per_page={{ paginator.limit }}#}">
+                                    Next
+                                    <span class="fa fa-angle-right"></span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                    <p>
+                        <small class="paginator-status">
+                            Showing
+                            <strong>
+                                {{ paginator.skip }}-{{ curr_max_range }}
+                            </strong>
+                            of <strong>{{ paginator.count }}</strong> results
+                        </small>
+                    </p>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "layouts/charts_base.html" %}
+
+{% block chart_body %}
+<div class="row">
+    <div class="col-md-12">
+        <h2 class="chart-header lead text-center">
+            <span class="dashboard-title">{{ view.name }}</span>
+            {% if can_edit and not demo_mode %}
+                <small>
+                    {% include "partials/dashboard-options.html" %}
+                </small>
+            {% endif %}
+        </h2>
+        {% if can_edit %}
+            <div class="{{ 'collapse' if view.modules|length else '' }}" id="edit-view-container">
+                {% if not view.modules|length %}
+                    <div class="alert alert-warning text-center">
+                        <p>
+                            It looks like this dashboard has no modules - add some below.
+                        </p>
+                    </div>
+                {% endif %}
+                {% include "partials/form-view.html" %}
+            </div>
+            {% include "partials/form-json.html" %}
+        {% endif %}
+        <div class="layout" id="view-builder">
+            <div id="container">
+
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
